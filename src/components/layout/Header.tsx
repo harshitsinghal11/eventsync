@@ -35,7 +35,7 @@ export default function Header() {
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
           <Link href="/" className="flex items-center gap-2 group">
-            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform">
+            <div className="w-8 h-8 bg-[#0F172B] rounded-lg flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform">
               <CalendarDays size={16} className="text-white" />
             </div>
             <span className="text-xl font-extrabold text-slate-900 tracking-tight">

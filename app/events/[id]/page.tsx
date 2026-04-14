@@ -295,7 +295,7 @@ export default function EventDetailPage() {
                                 className="bg-white rounded-2xl shadow-sm border border-slate-100 p-8"
                             >
                                 <div className="flex items-center gap-2 mb-5">
-                                    <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
+                                    <div className="w-8 h-8 bg-[#000000] rounded-lg flex items-center justify-center">
                                         <User size={15} className="text-primary" />
                                     </div>
                                     <h2 className="text-xl font-extrabold text-slate-900">Coordinators</h2>

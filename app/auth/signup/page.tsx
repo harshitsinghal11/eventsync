@@ -88,7 +88,7 @@ export default function SignupPage() {
       >
         <div className="bg-white rounded-3xl shadow-2xl p-8 md:p-10">
           <div className="flex flex-col items-center mb-8">
-            <div className="w-12 h-12 bg-primary rounded-2xl flex items-center justify-center shadow-lg mb-4">
+            <div className="w-12 h-12 bg-[#0F172B] rounded-2xl flex items-center justify-center shadow-lg mb-4">
               <CalendarDays size={22} className="text-white" />
             </div>
             <h1 className="text-2xl font-extrabold text-slate-900">Create Account</h1>
