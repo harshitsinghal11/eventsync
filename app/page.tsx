@@ -240,7 +240,7 @@ export default function HomePage() {
       {/* ── Stats (live counts) ── */}
       <section className="bg-primary">
         <div className="container mx-auto px-4 py-10">
-          <div className="grid grid-cols-3 gap-6 text-center">
+          <div className="grid grid-cols-2 gap-6 text-center">
             {/* Events count */}
             <div className="flex flex-col items-center gap-1">
               <CalendarDays size={20} className="text-white/70 mb-1" />
@@ -265,13 +265,6 @@ export default function HomePage() {
                 </span>
               )}
               <span className="text-sm font-medium text-white/70">Opportunities</span>
-            </div>
-
-            {/* Students — static (no users table count needed) */}
-            <div className="flex flex-col items-center gap-1">
-              <Users size={20} className="text-white/70 mb-1" />
-              <span className="text-3xl md:text-4xl font-extrabold text-white">10K+</span>
-              <span className="text-sm font-medium text-white/70">Students</span>
             </div>
           </div>
         </div>

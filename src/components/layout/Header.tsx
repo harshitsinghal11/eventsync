@@ -62,31 +62,18 @@ export default function Header() {
             {!isMounted ? (
               <div className="w-[160px] h-9 bg-slate-100 rounded-lg animate-pulse" />
             ) : session ? (
-              <div className="flex items-center gap-3">
-                <Link
-                  href="/admin"
-                  className="px-5 py-2 rounded-lg text-sm font-semibold transition-all duration-200 bg-blue-100 text-blue-800 hover:bg-blue-200 shadow-sm active:scale-95"
-                >
-                  Dashboard
-                </Link>
-                <button
-                  onClick={() => {
-                    clearSession();
-                    setSession(null);
-                    router.push('/');
-                  }}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 bg-red-600 text-white hover:bg-red-700 shadow-sm active:scale-95"
-                >
-                  <LogOut size={14} />
-                  Logout
-                </button>
-              </div>
+              <Link
+                href="/admin"
+                className="px-5 py-2 rounded-lg text-sm font-semibold transition-all duration-200 bg-blue-100 text-blue-800 hover:bg-blue-200 shadow-sm active:scale-95"
+              >
+                Dashboard
+              </Link>
             ) : (
               <Link
                 href="/auth/login"
                 className={`px-5 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${isAuthRoute
-                    ? 'bg-blue-900 text-white shadow-md'
-                    : 'bg-blue-800 text-white hover:bg-blue-700 shadow-sm hover:shadow-md active:scale-95'
+                  ? 'bg-blue-900 text-white shadow-md'
+                  : 'bg-blue-800 text-white hover:bg-blue-700 shadow-sm hover:shadow-md active:scale-95'
                   }`}
               >
                 Login
