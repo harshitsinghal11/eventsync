@@ -183,7 +183,7 @@ export default function HomePage() {
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute -top-24 -right-24 w-96 h-96 bg-primary/20 rounded-full blur-3xl" />
           <div className="absolute bottom-0 -left-16 w-72 h-72 bg-accent/10 rounded-full blur-3xl" />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary/5 rounded-full blur-3xl" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-150 h-150 bg-primary/5 rounded-full blur-3xl" />
         </div>
 
         <div className="container mx-auto px-4 py-24 md:py-32 relative z-10">
@@ -203,7 +203,7 @@ export default function HomePage() {
               className="text-5xl md:text-7xl font-extrabold text-white leading-tight tracking-tight mb-6"
             >
               Campus{' '}
-              <span className="bg-gradient-to-r from-indigo-500 to-purple-500 bg-clip-text text-transparent">
+              <span className="bg-linear-to-r from-indigo-500 to-purple-500 bg-clip-text text-transparent">
                 Event Hub
               </span>
 
@@ -309,7 +309,7 @@ export default function HomePage() {
                   className="bg-white border border-slate-100 rounded-2xl shadow-sm hover:shadow-lg transition-shadow overflow-hidden group"
                 >
                   {/* Card image area */}
-                  <div className="h-44 bg-gradient-to-br from-slate-800 to-slate-900 relative overflow-hidden">
+                  <div className="h-44 bg-linear-to-br from-slate-800 to-slate-900 relative overflow-hidden">
                     <div className="absolute inset-0 bg-primary/20" />
                     <div className="absolute bottom-3 left-3">
                       {event.category && (

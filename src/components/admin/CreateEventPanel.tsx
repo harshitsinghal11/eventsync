@@ -40,12 +40,12 @@ function newCoordinator(): Coordinator {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function CreateEventPanel() {
-  const [form, setForm]               = useState<FormState>(EMPTY_FORM);
+  const [form, setForm] = useState<FormState>(EMPTY_FORM);
   const [coordinators, setCoordinators] = useState<Coordinator[]>([]);
-  const [loading, setLoading]         = useState(false);
-  const [success, setSuccess]         = useState(false);
-  const [warning, setWarning]         = useState<string | null>(null);
-  const [error, setError]             = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [warning, setWarning] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   // ── Field helpers ──────────────────────────────────────────────────────────
 
@@ -188,7 +188,7 @@ export default function CreateEventPanel() {
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="flex flex-col lg:flex-row gap-6 items-start">
-          
+
           {/* ── Event Details Card ── */}
           <div className="flex-1 w-full bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-5">
             <h2 className="text-sm font-bold text-slate-700 uppercase tracking-wider">Event Details</h2>
@@ -364,14 +364,19 @@ export default function CreateEventPanel() {
                 </motion.div>
               ))}
             </AnimatePresence>
-          </div>
-        </div>
-
-        {/* ── Submit ── */}
+            {/* ── Submit ── */}
         <Button
           type="submit"
           disabled={loading}
-          className="w-full h-12 rounded-xl font-bold text-base shadow-md hover:shadow-primary/30 transition-all hover:-translate-y-0.5 disabled:hover:translate-y-0"
+          className="inline-flex items-center justify-center gap-2 
+w-full 
+bg-blue-600 hover:bg-blue-600/90 
+text-white font-semibold 
+px-8 py-3.5 rounded-xl 
+shadow-lg shadow-blue-600/20 hover:shadow-xl hover:shadow-blue-600/40 
+transition-all duration-200 ease-in-out mb-3
+hover:-translate-y-0.5 active:scale-95 
+focus:outline-none focus:ring-4 focus:ring-blue-600/30"
         >
           {loading ? (
             <><Loader2 size={16} className="animate-spin mr-2" />Creating Event…</>
@@ -379,6 +384,9 @@ export default function CreateEventPanel() {
             'Create Event'
           )}
         </Button>
+          </div>
+        </div>
+
       </form>
     </div>
   );

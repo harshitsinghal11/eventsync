@@ -73,6 +73,7 @@ export default function Footer() {
 
         <div className="border-t border-slate-800 mt-10 pt-6 flex flex-col md:flex-row justify-between items-center gap-3">
           <p className="text-sm text-slate-500">© 2026 EventSync. All rights reserved.</p>
+          <p className="text-sm text-slate-500">Made with</p>
           <div className="flex gap-4">
             <a href="#" className="text-sm text-slate-500 hover:text-slate-300 transition-colors">Privacy Policy</a>
             <a href="#" className="text-sm text-slate-500 hover:text-slate-300 transition-colors">Terms of Service</a>
