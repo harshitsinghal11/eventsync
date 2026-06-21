@@ -230,7 +230,7 @@ npm run start
 - Image/media upload support
 - Automated tests and metadata API cleanup
 
-## Contributing (Optional)
+## Contributing
 
 Contributions are welcome. Before opening a pull request:
 
@@ -240,6 +240,9 @@ Contributions are welcome. Before opening a pull request:
 
 ## Contact
 
-**Engineered by Harshit Singhal**
+Built by **Harshit** — B.Tech CSE, Manav Rachna University
 
-For questions about this project, reach out to the repository maintainer.
+- [GitHub](https://github.com/harshitsinghal11)
+- [LinkedIn](https://linkedin.com/in/harshitsinghal11)
+
+> _Feel free to reach out if you're building something similar or have questions about the implementation._
