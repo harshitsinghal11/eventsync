@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { motion } from 'motion/react';
@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 
 import { useOpportunity } from '@/src/hooks/data/useOpportunities';
-import type { Opportunity } from '@/src/types';
+
 
 const typeColors: Record<string, string> = {
   Research: 'bg-teal-100 text-teal-700',

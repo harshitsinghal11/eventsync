@@ -1,34 +1,49 @@
 # Polish & Refinement Log
 
-This document covers all the problems, bugs, and overengineering issues fixed in this project, broken down by phases to ensure a proper flow.
+This document covers all the remaining problems, bugs, security vulnerabilities, and overengineering issues present in the codebase, broken down by phases to ensure a proper flow for refinement.
 
-## Phase 1: Architecture Conversion (Next.js App Router + SWR + Server Actions)
+*(Note: Phases 1–3 covering Architecture Conversion, Initial UI Polish, and Student Registration Flows have been successfully completed).*
 
-### Problems Identified
-1. **Overengineering:** The project heavily relied on redundant internal REST API routes (`app/api/admin/...`) that merely wrapped Supabase queries.
-2. **Inconsistent Data Fetching:** Client pages used manual `fetch` calls wrapped in `useEffect` hooks, leading to complex and error-prone state management (loading, error, and data states).
-3. **Scattered Types:** TypeScript interfaces (`EventRow`, `Opportunity`, `Coordinator`) were duplicated across multiple components and pages.
+---
 
-### Fixes Implemented
-- **Unified Data Models:** Created a centralized `src/types/index.ts` to share standard TypeScript interfaces across the entire application.
-- **Server Actions for Mutations:** Migrated all admin mutation endpoints (POST/PUT/DELETE for events and opportunities) to secure Server Actions (`src/actions/eventActions.ts`, `src/actions/opportunityActions.ts`).
-- **SWR for Client Fetching:** Implemented custom SWR hooks (`useEvents`, `useOpportunities`) in `src/hooks/data/` that directly query Supabase on the client side, enabling automatic caching, revalidation, and simplified loading states.
-- **Obsolete APIs Removed:** Safely deleted `app/api/admin/` routes since the logic was absorbed by Server Actions.
-
-## Phase 2: UI/UX Polish & Refinement
+## Phase 4: Code Quality & Rendering Stability
 
 ### Problems Identified
-1. **Redundant Public APIs:** Like the admin APIs, the public read APIs (`app/api/events`, `app/api/opportunities`) were redundant since the new SWR hooks replaced them.
-2. **Legacy Fetching in Pages:** `app/page.tsx` and detail pages (`app/events/[id]/page.tsx`, `app/opportunity/[id]/page.tsx`) were still fetching from the obsolete REST APIs, missing out on SWR's caching benefits.
-3. **Missing Properties:** Type checking failed because `Opportunity` was missing the `stipend` field.
-4. **Generic Typography:** The UI used `Arial, Helvetica` which didn't match the modern design tokens of the application.
+1. **React Rendering Anti-Pattern:** In `app/page.tsx`, `Date.now()` is called directly inside the render cycle (`isDeadlineSoon` helper). This is an impure function call that violates React's rendering rules and causes hydration mismatches.
+2. **TypeScript `any` Abuse:** Heavy reliance on the `any` type in critical admin components (`CreateEventPanel`, `ManageEventsPanel`) and server actions (`eventActions.ts`). This defeats the purpose of TypeScript and hides potential runtime bugs.
+3. **Dead Code & Clutter:** Multiple pages (`app/events/page.tsx`, `app/events/[id]/page.tsx`, `app/opportunity/page.tsx`) have unused imports like `useEffect`, `useState`, and unused Types, causing compiler warnings and bloating the files.
+4. **Unescaped Entities:** React warnings in `app/dashboard/page.tsx` due to unescaped quotes (e.g., `haven't` instead of `haven&apos;t`).
 
-### Fixes Implemented
-- **Cleaned Obsolete Routes:** Completely removed `app/api/events` and `app/api/opportunities`. The frontend is now fully reliant on SWR for fetching dynamic data directly from Supabase.
-- **Consistent Data Fetching:** Refactored `app/page.tsx`, `app/events/[id]/page.tsx`, and `app/opportunity/[id]/page.tsx` to use `useEvent` and `useOpportunity` hooks.
-- **Type Consolidation:** Removed duplicate types from the client pages, strictly importing from `src/types/index.ts`. Added the missing `stipend` field to `Opportunity`.
-- **Modern Typography:** Integrated the `Inter` font from `next/font/google` into `app/layout.tsx` and removed the fallback fonts in `app/globals.css`, immediately elevating the premium feel of the platform.
-- **Documentation Alignment:** Realigned `README.md` and `docs/` to reflect the new Server Actions and SWR architecture, and added a complete `database.sql` schema file.
+### Proposed Fixes
+- Move the deadline calculation in `app/page.tsx` into a `useEffect` or generate a static server-side timestamp to ensure pure rendering.
+- Replace all instances of `any` with strict typing using the centralized interfaces in `src/types/index.ts`.
+- Run an automated cleanup to remove all unused React hooks and imports across the codebase.
+- Escape raw quotes in JSX strings.
 
-### Current State
-The project now perfectly aligns with the Universal Full-Stack Blueprint. It is performant, type-safe, maintainable, and visually polished!
+---
+
+## Phase 5: Security Hardening & Authentication
+
+### Problems Identified
+1. **Plaintext Passwords (CRITICAL):** The login route (`app/api/auth/login/route.ts`) checks passwords using a raw string comparison (`String(storedPassword) === password`). New signups also insert passwords directly into the database without hashing. This is a massive security vulnerability.
+2. **Lack of Row Level Security (RLS):** Supabase RLS is currently disabled or undocumented. Because the frontend uses the Supabase anon key, any user could theoretically query sensitive tables like `users` or `event_registrations` directly from the browser console.
+3. **Missing Rate Limiting:** The auth routes lack rate limiting, leaving them vulnerable to brute-force attacks.
+
+### Proposed Fixes
+- Introduce `bcryptjs` to hash passwords during signup and verify them securely during login.
+- Document and enforce strict Row Level Security (RLS) policies in the Supabase dashboard (e.g., `Users can only select their own registrations`, `Only admins can insert events`).
+- Add basic rate limiting to API routes, or migrate auth to a hardened provider like Auth.js (NextAuth).
+
+---
+
+## Phase 6: Advanced UI/UX & Component Polish
+
+### Problems Identified
+1. ~~**Monolithic Admin Panels:** The components inside `src/components/admin/` (like `ManageEventsPanel.tsx`) are growing too large and handling too much state (modals, fetching, deleting, forms).~~ *(Completed: Extracted `EventForm` and `OpportunityForm`)*
+2. **Accessibility (a11y) Gaps:** As noted in `docs/04_UI_UX.md`, there are no skip-to-content links, no keyboard trap testing for the mobile menu, and animations via `motion/react` do not respect the user's `prefers-reduced-motion` OS setting.
+3. **Generic Loading States:** While `SWR` handles data fetching, some mutations (like deleting an event) lack optimistic UI updates or specific, localized loading spinners (often freezing the whole UI or relying on a generic `disabled` state).
+
+### Proposed Fixes
+- ~~Refactor the Admin Panels into smaller, composable pieces (e.g., separating the Event Form from the Event Table).~~ *(Completed)*
+- Audit the mobile menu for keyboard accessibility and add `prefers-reduced-motion` variants to Framer Motion components.
+- Implement Optimistic UI updates for event and opportunity mutations to make the admin dashboard feel instantly responsive.

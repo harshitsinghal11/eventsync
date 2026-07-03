@@ -95,7 +95,7 @@ export default function Header() {
             ) : session ? (
               <div className="flex items-center gap-3">
                 <Link
-                  href="/admin"
+                  href={session.role === 'admin' || session.role === 'superadmin' ? '/admin' : '/dashboard'}
                   className="rounded-lg bg-blue-100 px-5 py-2 text-sm font-semibold text-blue-800 shadow-sm transition-all duration-200 hover:bg-blue-200 active:scale-95"
                 >
                   Dashboard
@@ -152,7 +152,7 @@ export default function Header() {
               {sessionLoading ? null : session ? (
                 <>
                   <Link
-                    href="/admin"
+                    href={session.role === 'admin' || session.role === 'superadmin' ? '/admin' : '/dashboard'}
                     className="mt-2 rounded-lg bg-blue-100 px-4 py-2.5 text-center text-sm font-semibold text-blue-800"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >

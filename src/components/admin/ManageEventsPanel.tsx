@@ -1,63 +1,15 @@
 'use client';
 
-import { useEffect, useState, FormEvent } from 'react';
+import { useState } from 'react';
 import {
   Pencil, Trash2, Loader2, AlertCircle,
-  CalendarDays, RefreshCw, X, UserPlus,
-  CheckCircle2, Phone, User, Save,
+  CalendarDays, RefreshCw, X,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { EVENT_CATEGORY_OPTIONS } from '@/src/lib/event-categories';
 import { useEvents } from '@/src/hooks/data/useEvents';
 import { updateEvent, deleteEvent } from '@/src/actions/eventActions';
-
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-interface EventRow {
-  id: string;
-  title: string;
-  description?: string;
-  date?: string;
-  time?: string;
-  venue?: string;
-  duration?: string;
-  category?: string;
-  perks?: string[] | string;
-  registration_link?: string;
-}
-
-interface Coordinator {
-  localId: string;
-  name: string;
-  phone: string;
-}
-
-interface EditForm {
-  title: string;
-  description: string;
-  date: string;
-  time: string;
-  venue: string;
-  duration: string;
-  category: string;
-  perks: string;
-  registration_link: string;
-  coordinators: Coordinator[];
-}
-
-const EMPTY_EDIT: EditForm = {
-  title: '', description: '', date: '', time: '',
-  venue: '', duration: '', category: '', perks: '',
-  registration_link: '',
-  coordinators: [],
-};
-
-function newCoord(): Coordinator {
-  return { localId: crypto.randomUUID(), name: '', phone: '' };
-}
+import EventForm, { EventFormState } from './EventForm';
 
 function perksToString(perks: string[] | string | undefined): string {
   if (!perks) return '';
@@ -65,35 +17,20 @@ function perksToString(perks: string[] | string | undefined): string {
   return perks;
 }
 
-const textareaClassName =
-  'w-full resize-none rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-4 focus:ring-blue-500/10';
-
-const selectClassName =
-  'h-10 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-4 focus:ring-blue-500/10';
-
-// ─── Main component ───────────────────────────────────────────────────────────
-
 export default function ManageEventsPanel() {
   const { events, isLoading: loading, isError, mutate } = useEvents();
   const error = isError ? String(isError) : null;
   const [deleting, setDeleting] = useState<string | null>(null);
 
   // Edit drawer state
-  const [editId, setEditId]         = useState<string | null>(null);
-  const [editForm, setEditForm]     = useState<EditForm>(EMPTY_EDIT);
-  const [editLoading, setEditLoading] = useState(false);
+  const [editId, setEditId] = useState<string | null>(null);
+  const [editInitialData, setEditInitialData] = useState<EventFormState | null>(null);
   const [editFetching, setEditFetching] = useState(false);
-  const [editSuccess, setEditSuccess]   = useState(false);
-  const [editWarning, setEditWarning]   = useState<string | null>(null);
-  const [editError, setEditError]       = useState<string | null>(null);
+  const [editError, setEditError] = useState<string | null>(null);
 
-  // ── Load list ──────────────────────────────────────────────────────────────
-  
   function load() {
     mutate();
   }
-
-  // ── Delete ─────────────────────────────────────────────────────────────────
 
   async function handleDelete(id: string, title: string) {
     if (!confirm(`Delete "${title}"? This cannot be undone.`)) return;
@@ -109,24 +46,19 @@ export default function ManageEventsPanel() {
     }
   }
 
-  // ── Open edit drawer ───────────────────────────────────────────────────────
-
   async function openEdit(id: string) {
     setEditId(id);
     setEditFetching(true);
-    setEditSuccess(false);
-    setEditWarning(null);
     setEditError(null);
-    setEditForm(EMPTY_EDIT);
+    setEditInitialData(null);
 
     try {
-      // Find event locally since we use SWR, no need for extra fetch if we have the data
       const ev = events.find(e => e.id === id);
       if (!ev) throw new Error('Event not found');
 
-      const coords: any[] = (ev as any).event_coordinators ?? [];
+      const coords: Record<string, unknown>[] = ((ev as unknown as Record<string, unknown>).event_coordinators as Record<string, unknown>[]) ?? [];
 
-      setEditForm({
+      setEditInitialData({
         title:       ev.title ?? '',
         description: ev.description ?? '',
         date:        ev.date ?? '',
@@ -138,8 +70,8 @@ export default function ManageEventsPanel() {
         registration_link: ev.registration_link ?? '',
         coordinators: coords.map((c) => ({
           localId: crypto.randomUUID(),
-          name:    c.name ?? '',
-          phone:   c.phone ?? '',
+          name:    (c.name as string) ?? '',
+          phone:   (c.phone as string) ?? '',
         })),
       });
     } catch (err) {
@@ -151,92 +83,26 @@ export default function ManageEventsPanel() {
 
   function closeDrawer() {
     setEditId(null);
-    setEditForm(EMPTY_EDIT);
-    setEditSuccess(false);
-    setEditWarning(null);
+    setEditInitialData(null);
     setEditError(null);
   }
 
-  // ── Edit form field helpers ────────────────────────────────────────────────
+  async function handleEditSubmit(data: EventFormState) {
+    if (!editId) return { success: false, warning: 'No event selected' };
+    
+    const result = await updateEvent(editId, {
+      ...data,
+      perks: data.perks
+        ? data.perks.split(',').map((p) => p.trim()).filter(Boolean)
+        : [],
+      registration_link: data.registration_link.trim() || null,
+      coordinators: data.coordinators
+        .filter((c) => c.name.trim())
+        .map(({ name, phone }) => ({ name, phone })),
+    });
 
-  function setField(field: keyof Omit<EditForm, 'coordinators'>) {
-    return (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-      setEditForm((f) => ({ ...f, [field]: e.target.value }));
-      setEditSuccess(false);
-      setEditWarning(null);
-      setEditError(null);
-    };
+    return result as { success: boolean; warning?: string };
   }
-
-  function addCoord() {
-    setEditForm((f) => ({ ...f, coordinators: [...f.coordinators, newCoord()] }));
-    setEditSuccess(false);
-    setEditWarning(null);
-    setEditError(null);
-  }
-
-  function updateCoord(localId: string, field: 'name' | 'phone', value: string) {
-    setEditForm((f) => ({
-      ...f,
-      coordinators: f.coordinators.map((c) =>
-        c.localId === localId ? { ...c, [field]: value } : c,
-      ),
-    }));
-    setEditSuccess(false);
-    setEditWarning(null);
-    setEditError(null);
-  }
-
-  function removeCoord(localId: string) {
-    setEditForm((f) => ({
-      ...f,
-      coordinators: f.coordinators.filter((c) => c.localId !== localId),
-    }));
-    setEditSuccess(false);
-    setEditWarning(null);
-    setEditError(null);
-  }
-
-  // ── Submit edit ────────────────────────────────────────────────────────────
-
-  async function handleEditSubmit(e: FormEvent) {
-    e.preventDefault();
-    if (!editId) return;
-    setEditLoading(true);
-    setEditSuccess(false);
-    setEditWarning(null);
-    setEditError(null);
-
-    try {
-      const result = await updateEvent(editId, {
-        ...editForm,
-        perks: editForm.perks
-          ? editForm.perks.split(',').map((p) => p.trim()).filter(Boolean)
-          : [],
-        registration_link: editForm.registration_link.trim() || null,
-        coordinators: editForm.coordinators
-          .filter((c) => c.name.trim())
-          .map(({ name, phone }) => ({ name, phone })),
-      });
-
-      if (!result.success) throw new Error('Update failed.');
-
-      if ((result as any).warning) {
-        setEditWarning((result as any).warning);
-      }
-
-      // Refresh the list
-      mutate();
-
-      setEditSuccess(true);
-    } catch (err) {
-      setEditError(String(err).replace('Error: ', ''));
-    } finally {
-      setEditLoading(false);
-    }
-  }
-
-  // ── Render ─────────────────────────────────────────────────────────────────
 
   if (loading) return (
     <div className="flex items-center gap-2 text-slate-500 py-16 justify-center">
@@ -377,204 +243,27 @@ export default function ManageEventsPanel() {
                     </div>
                   ))}
                 </div>
-              ) : (
-                <form onSubmit={handleEditSubmit} className="p-5 space-y-4 max-h-[calc(100vh-14rem)] overflow-y-auto">
-
-                  {/* Feedback banners */}
-                  <AnimatePresence>
-                    {editSuccess && (
-                      <motion.div
-                        key="ok"
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: 'auto' }}
-                        exit={{ opacity: 0, height: 0 }}
-                        className="overflow-hidden"
-                      >
-                        <div className="flex items-center gap-2 bg-green-50 border border-green-200 text-green-700 rounded-xl px-3 py-2.5 text-sm font-medium">
-                          <CheckCircle2 size={14} className="shrink-0" /> Updated successfully!
-                        </div>
-                      </motion.div>
-                    )}
-                    {editWarning && (
-                      <motion.div
-                        key="warn"
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: 'auto' }}
-                        exit={{ opacity: 0, height: 0 }}
-                        className="overflow-hidden"
-                      >
-                        <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm font-medium text-amber-700">
-                          Coordinator sync warning: {editWarning}
-                        </div>
-                      </motion.div>
-                    )}
-                    {editError && (
-                      <motion.div
-                        key="err"
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: 'auto' }}
-                        exit={{ opacity: 0, height: 0 }}
-                        className="overflow-hidden"
-                      >
-                        <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl px-3 py-2.5 text-sm font-medium">
-                          {editError}
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-
-                  {/* ── Fields ── */}
-                  <DrawerField label="Title *" htmlFor="ed-title">
-                    <Input id="ed-title" value={editForm.title} onChange={setField('title')} required className="h-9 text-sm rounded-xl" />
-                  </DrawerField>
-
-                  <DrawerField label="Description" htmlFor="ed-desc">
-                    <textarea
-                      id="ed-desc"
-                      value={editForm.description}
-                      onChange={setField('description')}
-                      rows={3}
-                      className={textareaClassName}
-                    />
-                  </DrawerField>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <DrawerField label="Date *" htmlFor="ed-date">
-                      <Input id="ed-date" type="date" value={editForm.date} onChange={setField('date')} required className="h-9 text-sm rounded-xl" />
-                    </DrawerField>
-                    <DrawerField label="Time" htmlFor="ed-time">
-                      <Input id="ed-time" type="time" value={editForm.time} onChange={setField('time')} className="h-9 text-sm rounded-xl" />
-                    </DrawerField>
+              ) : editError ? (
+                <div className="p-5">
+                  <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl px-3 py-2.5 text-sm font-medium">
+                    {editError}
                   </div>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <DrawerField label="Venue" htmlFor="ed-venue">
-                      <Input id="ed-venue" value={editForm.venue} onChange={setField('venue')} placeholder="Venue" className="h-9 text-sm rounded-xl" />
-                    </DrawerField>
-                    <DrawerField label="Duration" htmlFor="ed-duration">
-                      <Input id="ed-duration" value={editForm.duration} onChange={setField('duration')} placeholder="e.g. 3 hours" className="h-9 text-sm rounded-xl" />
-                    </DrawerField>
-                  </div>
-
-                  <DrawerField label="Category" htmlFor="ed-category">
-                    <select
-                      id="ed-category"
-                      value={editForm.category}
-                      onChange={setField('category')}
-                      className={selectClassName}
-                    >
-                      <option value="">Select category</option>
-                      {EVENT_CATEGORY_OPTIONS.map((c) => (
-                        <option key={c} value={c}>{c}</option>
-                      ))}
-                    </select>
-                  </DrawerField>
-
-                  <DrawerField label="Perks" htmlFor="ed-perks">
-                    <Input id="ed-perks" value={editForm.perks} onChange={setField('perks')} placeholder="Comma-separated" className="h-9 text-sm rounded-xl" />
-                  </DrawerField>
-
-                  <DrawerField label="Registration Link" htmlFor="ed-reg-link">
-                    <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[10px] font-medium pointer-events-none select-none">URL</span>
-                      <Input
-                        id="ed-reg-link"
-                        type="url"
-                        value={editForm.registration_link}
-                        onChange={setField('registration_link')}
-                        placeholder="https://forms.google.com/..."
-                        className="h-9 text-sm rounded-xl pl-9"
-                      />
-                    </div>
-                  </DrawerField>
-
-                  {/* ── Coordinators ── */}
-                  <div className="pt-1">
-                    <div className="flex items-center justify-between mb-3">
-                      <p className="text-xs font-bold text-slate-600 uppercase tracking-wider">Coordinators</p>
-                      <button
-                        type="button"
-                        onClick={addCoord}
-                        className="flex items-center gap-1 text-xs font-semibold text-primary hover:text-primary/80 transition-colors"
-                      >
-                        <UserPlus size={12} /> Add
-                      </button>
-                    </div>
-
-                    {editForm.coordinators.length === 0 ? (
-                      <div className="text-center py-4 border-2 border-dashed border-slate-100 rounded-xl">
-                        <p className="text-xs text-slate-400">No coordinators.</p>
-                        <button type="button" onClick={addCoord} className="text-xs text-primary font-semibold mt-0.5 hover:underline">
-                          Add one
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="space-y-2">
-                        <AnimatePresence initial={false}>
-                          {editForm.coordinators.map((coord, idx) => (
-                            <motion.div
-                              key={coord.localId}
-                              initial={{ opacity: 0, height: 0 }}
-                              animate={{ opacity: 1, height: 'auto' }}
-                              exit={{ opacity: 0, height: 0 }}
-                              transition={{ duration: 0.18 }}
-                              className="overflow-hidden"
-                            >
-                              <div className="flex items-center gap-2 p-3 bg-slate-50 rounded-xl border border-slate-100">
-                                <span className="w-5 h-5 bg-primary/10 rounded-full flex items-center justify-center text-primary text-[10px] font-bold shrink-0">
-                                  {idx + 1}
-                                </span>
-                                <div className="flex-1 grid grid-cols-2 gap-2">
-                                  <div className="space-y-0.5">
-                                    <p className="text-[10px] font-semibold text-slate-500 flex items-center gap-0.5">
-                                      <User size={9} /> Name
-                                    </p>
-                                    <Input
-                                      value={coord.name}
-                                      onChange={(e) => updateCoord(coord.localId, 'name', e.target.value)}
-                                      placeholder="Full name"
-                                      className="h-8 text-xs rounded-lg"
-                                    />
-                                  </div>
-                                  <div className="space-y-0.5">
-                                    <p className="text-[10px] font-semibold text-slate-500 flex items-center gap-0.5">
-                                      <Phone size={9} /> Phone
-                                    </p>
-                                    <Input
-                                      value={coord.phone}
-                                      onChange={(e) => updateCoord(coord.localId, 'phone', e.target.value)}
-                                      placeholder="Phone"
-                                      className="h-8 text-xs rounded-lg"
-                                    />
-                                  </div>
-                                </div>
-                                <button
-                                  type="button"
-                                  onClick={() => removeCoord(coord.localId)}
-                                  className="p-1 rounded-lg text-slate-300 hover:text-red-500 hover:bg-red-50 transition-colors shrink-0"
-                                >
-                                  <X size={13} />
-                                </button>
-                              </div>
-                            </motion.div>
-                          ))}
-                        </AnimatePresence>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Save button */}
-                  <Button
-                    type="submit"
-                    disabled={editLoading}
-                    className="w-full h-10 rounded-xl font-bold text-sm mt-2"
-                  >
-                    {editLoading
-                      ? <><Loader2 size={14} className="animate-spin mr-2" />Saving...</>
-                      : <><Save size={14} className="mr-2" />Save Changes</>}
-                  </Button>
-                </form>
-              )}
+                </div>
+              ) : editInitialData ? (
+                <div className="p-5 max-h-[calc(100vh-14rem)] overflow-y-auto">
+                  <EventForm
+                    key={editId}
+                    initialData={editInitialData}
+                    onSubmit={handleEditSubmit}
+                    submitLabel="Save Changes"
+                    loadingLabel="Saving..."
+                    successMessage="Event updated successfully!"
+                    onSuccess={mutate}
+                    hideHeader={true}
+                    layout="vertical"
+                  />
+                </div>
+              ) : null}
             </div>
           </motion.div>
         )}
@@ -582,15 +271,3 @@ export default function ManageEventsPanel() {
     </div>
   );
 }
-
-// ─── Drawer field wrapper ─────────────────────────────────────────────────────
-
-function DrawerField({ label, htmlFor, children }: { label: string; htmlFor: string; children: React.ReactNode }) {
-  return (
-    <div className="space-y-1">
-      <Label htmlFor={htmlFor} className="text-xs font-semibold text-slate-600">{label}</Label>
-      {children}
-    </div>
-  );
-}
-

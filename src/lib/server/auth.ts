@@ -3,7 +3,7 @@ import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 import type { AdminSession } from '@/src/types';
 
-const SESSION_COOKIE_NAME = 'eventsync_admin_session';
+const SESSION_COOKIE_NAME = 'eventsync_session';
 const SESSION_DURATION_SECONDS = 60 * 60 * 8;
 const ADMIN_ROLES = new Set(['admin', 'superadmin']);
 
@@ -85,7 +85,7 @@ function isAdminRole(role: string | null | undefined) {
   return typeof role === 'string' && ADMIN_ROLES.has(role.toLowerCase());
 }
 
-export function buildAdminSession(user: {
+export function buildSession(user: {
   id: string | number;
   email: string;
   name?: string | null;
@@ -108,7 +108,7 @@ export function hasAdminAccess(role: string | null | undefined) {
   return isAdminRole(role);
 }
 
-export function setAdminSessionCookie(response: NextResponse, session: AdminSession) {
+export function setSessionCookie(response: NextResponse, session: AdminSession) {
   const secret = readSessionSecret();
 
   if (!secret) {
@@ -126,7 +126,7 @@ export function setAdminSessionCookie(response: NextResponse, session: AdminSess
   });
 }
 
-export function clearAdminSessionCookie(response: NextResponse) {
+export function clearSessionCookie(response: NextResponse) {
   response.cookies.set({
     name: SESSION_COOKIE_NAME,
     value: '',
@@ -136,6 +136,29 @@ export function clearAdminSessionCookie(response: NextResponse) {
     path: '/',
     maxAge: 0,
   });
+}
+
+export async function getSession() {
+  const secret = readSessionSecret();
+
+  if (!secret) {
+    return null;
+  }
+
+  const cookieStore = await cookies();
+  const rawToken = cookieStore.get(SESSION_COOKIE_NAME)?.value;
+
+  if (!rawToken) {
+    return null;
+  }
+
+  const session = verifySignedToken(rawToken, secret);
+
+  if (!session) {
+    return null;
+  }
+
+  return session;
 }
 
 export async function getAdminSession() {

@@ -46,7 +46,11 @@ export default function LoginPage() {
         return;
       }
 
-      window.location.assign('/admin');
+      if (json.session.role === 'admin' || json.session.role === 'superadmin') {
+        window.location.assign('/admin');
+      } else {
+        window.location.assign('/dashboard');
+      }
     } catch {
       setError('Unable to reach the server. Please try again.');
     } finally {

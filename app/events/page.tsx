@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'motion/react';
 import {
@@ -7,15 +7,14 @@ import {
     Loader2, AlertCircle, CalendarDays, X,
 } from 'lucide-react';
 import {
-    EVENT_CATEGORY_BACKGROUNDS,
-    EVENT_CATEGORY_COLORS,
+
     EVENT_CATEGORY_OPTIONS,
     type EventCategory,
     normalizeEventCategory,
 } from '@/src/lib/event-categories';
 
 import { useEvents } from '@/src/hooks/data/useEvents';
-import type { Event } from '@/src/types';
+
 
 type Category = 'All' | EventCategory;
 
@@ -265,7 +264,7 @@ export default function EventsPage() {
 
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                 {filtered.map((event, i) => {
-                                    const category = normalizeEventCategory(event.category);
+
 
                                     return (
                                         <motion.div

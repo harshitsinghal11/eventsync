@@ -59,7 +59,7 @@ export async function createEvent(payload: EventPayload) {
   const eventId = event.id;
   const rawCoordinators = Array.isArray(payload.coordinators) ? payload.coordinators : [];
   const validCoordinators = rawCoordinators
-    .map((c: any) => ({
+    .map((c: { name?: unknown; phone?: unknown }) => ({
       name: typeof c.name === 'string' ? c.name.trim() : '',
       phone: typeof c.phone === 'string' && c.phone.trim().length > 0 ? c.phone.trim() : null,
     }))
@@ -116,7 +116,7 @@ export async function updateEvent(id: string, payload: EventPayload) {
 
   const rawCoordinators = Array.isArray(payload.coordinators) ? payload.coordinators : [];
   const validCoordinators = rawCoordinators
-    .map((c: any) => ({
+    .map((c: { name?: unknown; phone?: unknown }) => ({
       name: typeof c.name === 'string' ? c.name.trim() : '',
       phone: typeof c.phone === 'string' && c.phone.trim().length > 0 ? c.phone.trim() : null,
     }))

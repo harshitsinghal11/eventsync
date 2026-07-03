@@ -92,8 +92,10 @@ Built on shadcn-style Radix primitives under `src/components/ui/`:
 | `Header` | Global nav + session actions |
 | `Footer` | Site links and branding |
 | `AdminDashboard` | Admin shell and panel routing |
-| `CreateEventPanel` / `ManageEventsPanel` | Event admin CRUD |
-| `CreateOpportunityPanel` / `ManageOpportunitiesPanel` | Opportunity admin CRUD |
+| `CreateEventPanel` / `ManageEventsPanel` | Event admin CRUD panels |
+| `EventForm` | Shared form logic and UI for creating and editing events |
+| `CreateOpportunityPanel` / `ManageOpportunitiesPanel` | Opportunity admin CRUD panels |
+| `OpportunityForm` | Shared form logic and UI for creating and editing opportunities |
 | `Spinner` | Present but not integrated in layout |
 | `ProtectedRoute` | Present but not used (server redirect used instead) |
 | `CookieBanner` / `CookieBannerErrorBoundary` | Present but not mounted in layout |

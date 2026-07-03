@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server';
-import { getAdminSession } from '@/src/lib/server/auth';
+import { getSession } from '@/src/lib/server/auth';
 
 export async function GET() {
-  const session = await getAdminSession();
+  const session = await getSession();
 
   if (!session) {
-    return NextResponse.json({ error: 'No active admin session.' }, { status: 401 });
+    return NextResponse.json({ error: 'No active session.' }, { status: 401 });
   }
 
   return NextResponse.json({ session });

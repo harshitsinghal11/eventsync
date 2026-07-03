@@ -4,13 +4,13 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'motion/react';
 import {
-  ArrowRight, CalendarDays, Briefcase, Users,
+  ArrowRight, CalendarDays, Briefcase,
   Sparkles, ChevronRight, AlertCircle,
 } from 'lucide-react';
 
 import { useEvents } from '@/src/hooks/data/useEvents';
 import { useOpportunities } from '@/src/hooks/data/useOpportunities';
-import type { Event, Opportunity } from '@/src/types';
+import type { Event } from '@/src/types';
 
 function parseCalendarDate(dateStr?: string): Date | null {
   if (!dateStr) {
@@ -140,9 +140,16 @@ export default function HomePage() {
     }
   }
 
+  const [now, setNow] = useState<number | null>(null);
+  
+  useEffect(() => {
+    const t = setTimeout(() => setNow(Date.now()), 0);
+    return () => clearTimeout(t);
+  }, []);
+
   function isDeadlineSoon(deadline?: string) {
-    if (!deadline) return false;
-    const diff = new Date(deadline).getTime() - Date.now();
+    if (!deadline || !now) return false;
+    const diff = new Date(deadline).getTime() - now;
     return diff > 0 && diff < 7 * 24 * 60 * 60 * 1000;
   }
 

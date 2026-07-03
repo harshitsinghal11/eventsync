@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { motion } from 'motion/react';
@@ -14,6 +14,7 @@ import {
   Phone,
   Timer,
   User,
+  ExternalLink,
 } from 'lucide-react';
 import {
   EVENT_CATEGORY_BACKGROUNDS,
@@ -22,7 +23,8 @@ import {
 } from '@/src/lib/event-categories';
 
 import { useEvent } from '@/src/hooks/data/useEvents';
-import type { Event, Coordinator } from '@/src/types';
+
+import RegistrationButton from '@/src/components/RegistrationButton';
 
 function parsePerks(raw: string | string[] | undefined | null): string[] {
   if (!raw) return [];
@@ -104,8 +106,7 @@ export default function EventDetailPage() {
   const category = normalizeEventCategory(event.category);
   const heroBg = EVENT_CATEGORY_BACKGROUNDS[category ?? ''] ?? 'from-slate-800 to-slate-950';
   const categoryBadge = EVENT_CATEGORY_COLORS[category ?? ''] ?? 'bg-slate-100 text-slate-700';
-  const registrationLink =
-    typeof event.registration_link === 'string' ? event.registration_link.trim() : '';
+
 
   const detailItems = [
     { icon: Calendar, label: 'Date', value: event.date },
@@ -247,27 +248,20 @@ export default function EventDetailPage() {
               </motion.div>
 
               <div className="space-y-2 pt-2">
-                {registrationLink ? (
-                  <a
-                    href={registrationLink}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex w-full items-center justify-center rounded-xl bg-primary px-10 py-3.5 font-bold text-white shadow-md transition-all hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-primary/30 md:w-auto"
-                  >
-                    Register Now
-                  </a>
-                ) : (
-                  <>
-                    <button
-                      disabled
-                      className="w-full cursor-not-allowed rounded-xl bg-slate-300 px-10 py-3.5 font-bold text-slate-600 md:w-auto"
+                <RegistrationButton eventId={event.id} />
+
+                {event.registration_link && (
+                  <div className="mt-3 text-center">
+                    <p className="mb-2 text-xs text-slate-500">Or register via external link:</p>
+                    <a
+                      href={event.registration_link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center justify-center gap-1.5 text-sm font-semibold text-primary transition-colors hover:text-primary/80"
                     >
-                      Registration Unavailable
-                    </button>
-                    <p className="text-sm text-slate-500">
-                      No registration link has been added for this event yet.
-                    </p>
-                  </>
+                      External Form <ExternalLink size={14} />
+                    </a>
+                  </div>
                 )}
               </div>
             </div>
