@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import type { AdminSession } from '@/lib/session';
+import type { AdminSession } from '@/src/types';
 
 /**
  * Client-side route guard for pages that require an admin session.

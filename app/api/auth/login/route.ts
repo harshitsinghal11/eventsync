@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { buildAdminSession, hasAdminAccess, setAdminSessionCookie } from '@/lib/server/auth';
-import { createSupabaseClient } from '@/lib/server/supabase';
+import { buildAdminSession, hasAdminAccess, setAdminSessionCookie } from '@/src/lib/server/auth';
+import { createSupabaseClient } from '@/src/lib/server/supabase';
 
 type LoginPayload = {
   email?: unknown;

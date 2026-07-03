@@ -10,7 +10,9 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { EVENT_CATEGORY_OPTIONS } from '@/lib/event-categories';
+import { EVENT_CATEGORY_OPTIONS } from '@/src/lib/event-categories';
+import { useEvents } from '@/src/hooks/data/useEvents';
+import { updateEvent, deleteEvent } from '@/src/actions/eventActions';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -72,9 +74,8 @@ const selectClassName =
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export default function ManageEventsPanel() {
-  const [events, setEvents]     = useState<EventRow[]>([]);
-  const [loading, setLoading]   = useState(true);
-  const [error, setError]       = useState<string | null>(null);
+  const { events, isLoading: loading, isError, mutate } = useEvents();
+  const error = isError ? String(isError) : null;
   const [deleting, setDeleting] = useState<string | null>(null);
 
   // Edit drawer state
@@ -87,23 +88,10 @@ export default function ManageEventsPanel() {
   const [editError, setEditError]       = useState<string | null>(null);
 
   // ── Load list ──────────────────────────────────────────────────────────────
-
-  async function load() {
-    setLoading(true);
-    setError(null);
-    try {
-      const res  = await fetch('/api/events');
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error ?? 'Failed to load events.');
-      setEvents(json.events ?? json ?? []);
-    } catch (err) {
-      setError(String(err).replace('Error: ', ''));
-    } finally {
-      setLoading(false);
-    }
+  
+  function load() {
+    mutate();
   }
-
-  useEffect(() => { load(); }, []);
 
   // ── Delete ─────────────────────────────────────────────────────────────────
 
@@ -111,10 +99,8 @@ export default function ManageEventsPanel() {
     if (!confirm(`Delete "${title}"? This cannot be undone.`)) return;
     setDeleting(id);
     try {
-      const res  = await fetch(`/api/admin/events/${id}`, { method: 'DELETE' });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error ?? 'Delete failed.');
-      setEvents((prev) => prev.filter((e) => e.id !== id));
+      await deleteEvent(id);
+      mutate();
       if (editId === id) closeDrawer();
     } catch (err) {
       alert(String(err).replace('Error: ', ''));
@@ -134,12 +120,11 @@ export default function ManageEventsPanel() {
     setEditForm(EMPTY_EDIT);
 
     try {
-      const res  = await fetch(`/api/events/${id}`);
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error ?? 'Failed to load event.');
+      // Find event locally since we use SWR, no need for extra fetch if we have the data
+      const ev = events.find(e => e.id === id);
+      if (!ev) throw new Error('Event not found');
 
-      const ev: EventRow = json.event;
-      const coords: { name: string; phone?: string }[] = json.coordinators ?? [];
+      const coords: any[] = (ev as any).event_coordinators ?? [];
 
       setEditForm({
         title:       ev.title ?? '',
@@ -223,36 +208,25 @@ export default function ManageEventsPanel() {
     setEditError(null);
 
     try {
-      const res = await fetch(`/api/admin/events/${editId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...editForm,
-          perks: editForm.perks
-            ? editForm.perks.split(',').map((p) => p.trim()).filter(Boolean)
-            : [],
-          registration_link: editForm.registration_link.trim() || null,
-          coordinators: editForm.coordinators
-            .filter((c) => c.name.trim())
-            .map(({ name, phone }) => ({ name, phone })),
-        }),
+      const result = await updateEvent(editId, {
+        ...editForm,
+        perks: editForm.perks
+          ? editForm.perks.split(',').map((p) => p.trim()).filter(Boolean)
+          : [],
+        registration_link: editForm.registration_link.trim() || null,
+        coordinators: editForm.coordinators
+          .filter((c) => c.name.trim())
+          .map(({ name, phone }) => ({ name, phone })),
       });
 
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error ?? 'Update failed.');
+      if (!result.success) throw new Error('Update failed.');
 
-      if (json.warning) {
-        setEditWarning(json.warning);
+      if ((result as any).warning) {
+        setEditWarning((result as any).warning);
       }
 
-      // Refresh the title in the list
-      setEvents((prev) =>
-        prev.map((ev) =>
-          ev.id === editId
-            ? { ...ev, title: editForm.title, date: editForm.date, venue: editForm.venue }
-            : ev,
-        ),
-      );
+      // Refresh the list
+      mutate();
 
       setEditSuccess(true);
     } catch (err) {

@@ -10,7 +10,8 @@ import {
   UserPlus,
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
-import { EVENT_CATEGORY_OPTIONS } from '@/lib/event-categories';
+import { EVENT_CATEGORY_OPTIONS } from '@/src/lib/event-categories';
+import { createEvent } from '@/src/actions/eventActions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -115,28 +116,23 @@ export default function CreateEventPanel() {
     setWarning(null);
 
     try {
-      const response = await fetch('/api/admin/events', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...form,
-          perks: form.perks
-            ? form.perks.split(',').map((value) => value.trim()).filter(Boolean)
-            : [],
-          registration_link: form.registration_link.trim() || null,
-          coordinators: coordinators
-            .filter((coordinator) => coordinator.name.trim())
-            .map(({ name, phone }) => ({ name, phone })),
-        }),
+      const result = await createEvent({
+        ...form,
+        perks: form.perks
+          ? form.perks.split(',').map((value) => value.trim()).filter(Boolean)
+          : [],
+        registration_link: form.registration_link.trim() || null,
+        coordinators: coordinators
+          .filter((coordinator) => coordinator.name.trim())
+          .map(({ name, phone }) => ({ name, phone })),
       });
 
-      const json = await response.json();
-      if (!response.ok) {
-        throw new Error(json.error ?? 'Failed to create event.');
+      if (!result.success) {
+        throw new Error('Failed to create event.');
       }
 
-      if (json.warning) {
-        setWarning(json.warning);
+      if ((result as any).warning) {
+        setWarning((result as any).warning);
       }
 
       setSuccess(true);

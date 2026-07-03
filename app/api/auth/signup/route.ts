@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createSupabaseClient } from '@/lib/server/supabase';
+import { createSupabaseClient } from '@/src/lib/server/supabase';
 
 type SignupPayload = {
   name?: unknown;

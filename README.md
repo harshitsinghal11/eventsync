@@ -9,7 +9,7 @@ The app has two primary experiences:
 - **Public discovery** — homepage, events, and opportunities (no login required).
 - **Admin management** — authenticated admins create, edit, and delete events and opportunities from `/admin`.
 
-All dynamic data flows through Next.js API routes, which read and write Supabase tables (`events`, `event_coordinators`, `opportunities`, `users`).
+All dynamic data is fetched securely via SWR from Supabase, and mutations are handled through Next.js Server Actions.
 
 ## Key Features
 
@@ -36,7 +36,7 @@ All dynamic data flows through Next.js API routes, which read and write Supabase
 
 ### API & Health
 
-- Public REST APIs for events and opportunities
+- Client-side data fetching via SWR (`src/hooks/data/`)
 - Auth APIs for login, logout, signup, and session
 - `/api/health` endpoint for Supabase connectivity checks
 
@@ -64,11 +64,7 @@ _Screenshots not included in this repository. Add images to a `screenshots/` fol
 eventsync/
 ├── app/                          # Next.js App Router pages and API routes
 │   ├── api/
-│   │   ├── admin/events/         # Protected event mutations
-│   │   ├── admin/opportunities/  # Protected opportunity mutations
 │   │   ├── auth/                 # login, logout, signup, session
-│   │   ├── events/               # Public event reads
-│   │   ├── opportunities/        # Public opportunity reads
 │   │   ├── config/supabase/      # Supabase config route
 │   │   └── health/               # Health check
 │   ├── admin/                    # Admin dashboard (server-protected)
@@ -86,10 +82,14 @@ eventsync/
 │   ├── session.ts                # AdminSession type
 │   ├── event-categories.ts       # Category constants
 │   └── utils.ts                  # Shared utilities
-├── src/components/
-│   ├── admin/                    # Admin dashboard panels
-│   ├── layout/                   # Header, Footer
-│   └── ui/                       # Radix UI components
+├── src/
+│   ├── actions/                  # Server Actions for mutations
+│   ├── hooks/data/               # SWR hooks for Supabase fetching
+│   ├── types/                    # Centralized TypeScript models
+│   ├── components/
+│   │   ├── admin/                # Admin dashboard panels
+│   │   ├── layout/               # Header, Footer
+│   │   └── ui/                   # Radix UI components
 ├── docs/                         # Project documentation
 ├── public/                       # Static assets
 ├── package.json

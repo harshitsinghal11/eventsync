@@ -181,91 +181,11 @@ Project not Supported.
 
 ### Public read models
 
-**`GET /api/events`**
-
-```json
-{
-  "events": [
-    {
-      "id": "string",
-      "title": "string",
-      "description": "string?",
-      "date": "string?",
-      "time": "string?",
-      "venue": "string?",
-      "duration": "string?",
-      "category": "string?",
-      "perks": ["string"],
-      "registration_link": "string?"
-    }
-  ]
-}
-```
-
-**`GET /api/events/[id]`**
-
-```json
-{
-  "event": { "...event fields, perks as array..." },
-  "coordinators": [
-    { "id": "string", "event_id": "string", "name": "string", "phone": "string?" }
-  ]
-}
-```
-
-**`GET /api/opportunities`**
-
-```json
-{
-  "data": [ { "...opportunity fields..." } ]
-}
-```
-
-**`GET /api/opportunities/[id]`**
-
-```json
-{
-  "opportunity": { "...opportunity fields..." }
-}
-```
+Reads are handled directly by the Supabase Client on the frontend, wrapped in SWR hooks (`src/hooks/data/useEvents.ts`, `src/hooks/data/useOpportunities.ts`).
 
 ### Admin write models
 
-**`POST /api/admin/events`**
-
-```json
-{
-  "title": "string",
-  "date": "string",
-  "description": "string?",
-  "time": "string?",
-  "venue": "string?",
-  "duration": "string?",
-  "category": "string?",
-  "perks": "string | string[]?",
-  "registration_link": "string?",
-  "coordinators": [{ "name": "string", "phone": "string?" }]
-}
-```
-
-**`PUT /api/admin/events/[id]`** — same body shape as create.
-
-**`POST /api/admin/opportunities`**
-
-```json
-{
-  "title": "string",
-  "contact_info": "string",
-  "description": "string?",
-  "organization": "string?",
-  "deadline": "string?",
-  "type": "string?",
-  "eligibility": "string?",
-  "registration_link": "string?"
-}
-```
-
-**`PUT /api/admin/opportunities/[id]`** — same body shape as create.
+Mutations are handled by Next.js Server Actions (`src/actions/eventActions.ts`, `src/actions/opportunityActions.ts`).
 
 ### Auth models
 

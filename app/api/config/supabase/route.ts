@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { readSupabaseCredentials } from '@/lib/server/supabase';
+import { readSupabaseCredentials } from '@/src/lib/server/supabase';
 
 /**
  * GET /api/config/supabase

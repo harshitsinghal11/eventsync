@@ -3,6 +3,7 @@
 import { type FormEvent, useState } from 'react';
 import { CheckCircle2, Loader2 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
+import { createOpportunity } from '@/src/actions/opportunityActions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -28,6 +29,8 @@ const EMPTY_FORM: FormState = {
   eligibility: '',
   registration_link: '',
 };
+
+const OPPORTUNITY_TYPE_OPTIONS = ['Research', 'Internship', 'Leadership', 'Volunteer', 'Other'];
 
 const textareaClassName =
   'w-full resize-none rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-4 focus:ring-blue-500/10';
@@ -75,18 +78,13 @@ export default function CreateOpportunityPanel() {
     setSuccess(false);
 
     try {
-      const response = await fetch('/api/admin/opportunities', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...form,
-          registration_link: form.registration_link.trim() || null,
-        }),
+      const result = await createOpportunity({
+        ...form,
+        registration_link: form.registration_link.trim() || null,
       });
 
-      const json = await response.json();
-      if (!response.ok) {
-        throw new Error(json.error ?? 'Failed to create opportunity.');
+      if (!result.success) {
+        throw new Error('Failed to create opportunity.');
       }
 
       setSuccess(true);

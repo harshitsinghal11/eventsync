@@ -15,25 +15,8 @@ import {
   Phone,
 } from 'lucide-react';
 
-interface Opportunity {
-  id: string;
-  title: string;
-  description?: string;
-  organization?: string;
-  deadline?: string;
-  contact_info?: string;
-  type?: string;
-  stipend?: string;
-  eligibility?: string;
-  registration_link?: string | null;
-  [key: string]: unknown;
-}
-
-interface FetchState {
-  opportunity: Opportunity | null;
-  loading: boolean;
-  error: string | null;
-}
+import { useOpportunity } from '@/src/hooks/data/useOpportunities';
+import type { Opportunity } from '@/src/types';
 
 const typeColors: Record<string, string> = {
   Research: 'bg-teal-100 text-teal-700',
@@ -128,44 +111,8 @@ function ErrorState({ message }: { message: string }) {
 
 export default function OpportunityDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const [state, setState] = useState<FetchState>({
-    opportunity: null,
-    loading: true,
-    error: null,
-  });
-
-  useEffect(() => {
-    if (!id) return;
-    let cancelled = false;
-
-    async function load() {
-      setState({ opportunity: null, loading: true, error: null });
-
-      try {
-        const res = await fetch(`/api/opportunities/${id}`);
-        const json = await res.json();
-
-        if (!res.ok) {
-          throw new Error(json.error ?? `HTTP ${res.status}`);
-        }
-
-        if (!cancelled) {
-          setState({ opportunity: json.opportunity, loading: false, error: null });
-        }
-      } catch (error) {
-        if (!cancelled) {
-          setState({ opportunity: null, loading: false, error: String(error) });
-        }
-      }
-    }
-
-    load();
-    return () => {
-      cancelled = true;
-    };
-  }, [id]);
-
-  const { opportunity, loading, error } = state;
+  const { opportunity, isLoading: loading, isError } = useOpportunity(id);
+  const error = isError ? String(isError) : null;
 
   if (loading) return <LoadingSkeleton />;
   if (error || !opportunity) {

@@ -8,26 +8,9 @@ import {
   Sparkles, ChevronRight, AlertCircle,
 } from 'lucide-react';
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-interface EventRow {
-  id: string;
-  title: string;
-  description?: string;
-  date?: string;
-  time?: string;
-  venue?: string;
-  category?: string;
-}
-
-interface OppRow {
-  id: string;
-  title: string;
-  description?: string;
-  organization?: string;
-  deadline?: string;
-  contact_info?: string;
-}
+import { useEvents } from '@/src/hooks/data/useEvents';
+import { useOpportunities } from '@/src/hooks/data/useOpportunities';
+import type { Event, Opportunity } from '@/src/types';
 
 function parseCalendarDate(dateStr?: string): Date | null {
   if (!dateStr) {
@@ -46,7 +29,7 @@ function parseCalendarDate(dateStr?: string): Date | null {
   return Number.isNaN(fallback.getTime()) ? null : fallback;
 }
 
-function selectFeaturedEvents(allEvents: EventRow[]): EventRow[] {
+function selectFeaturedEvents(allEvents: Event[]): Event[] {
   const today = new Date();
   const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
 
@@ -128,64 +111,21 @@ function SectionError({ message, onRetry }: { message: string; onRetry: () => vo
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function HomePage() {
-  // Events state
-  const [events, setEvents] = useState<EventRow[]>([]);
-  const [eventsLoading, setEventsLoading] = useState(true);
-  const [eventsError, setEventsError] = useState<string | null>(null);
+  const { events: allEvents, isLoading: eventsLoading, isError: eventsErrorRaw } = useEvents();
+  const { opportunities: allOpps, isLoading: oppsLoading, isError: oppsErrorRaw } = useOpportunities();
 
-  // Opportunities state
-  const [opps, setOpps] = useState<OppRow[]>([]);
-  const [oppsLoading, setOppsLoading] = useState(true);
-  const [oppsError, setOppsError] = useState<string | null>(null);
+  const eventsError = eventsErrorRaw ? String(eventsErrorRaw) : null;
+  const oppsError = oppsErrorRaw ? String(oppsErrorRaw) : null;
 
   // Stats derived from live data
-  const [totalEvents, setTotalEvents] = useState<number | null>(null);
-  const [totalOpps, setTotalOpps] = useState<number | null>(null);
+  const totalEvents = allEvents.length;
+  const totalOpps = allOpps.length;
 
-  // ── Fetch events ────────────────────────────────────────────────────────────
+  // Highlight the next 3 upcoming events on the homepage
+  const events = selectFeaturedEvents(allEvents);
 
-  async function fetchEvents() {
-    setEventsLoading(true);
-    setEventsError(null);
-    try {
-      const res = await fetch('/api/events');
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error ?? 'Failed to load events.');
-      const all: EventRow[] = json.events ?? [];
-      setTotalEvents(all.length);
-      // Highlight the next 3 upcoming events on the homepage.
-      setEvents(selectFeaturedEvents(all));
-    } catch (err) {
-      setEventsError(String(err).replace('Error: ', ''));
-    } finally {
-      setEventsLoading(false);
-    }
-  }
-
-  // ── Fetch opportunities ─────────────────────────────────────────────────────
-
-  async function fetchOpps() {
-    setOppsLoading(true);
-    setOppsError(null);
-    try {
-      const res = await fetch('/api/opportunities');
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error ?? 'Failed to load opportunities.');
-      const all: OppRow[] = json.data ?? [];
-      setTotalOpps(all.length);
-      // Show up to 3 soonest deadlines
-      setOpps(all.slice(0, 3));
-    } catch (err) {
-      setOppsError(String(err).replace('Error: ', ''));
-    } finally {
-      setOppsLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    fetchEvents();
-    fetchOpps();
-  }, []);
+  // Show up to 3 soonest deadlines
+  const opps = allOpps.slice(0, 3);
 
   // ── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -327,7 +267,7 @@ export default function HomePage() {
             {eventsLoading ? (
               [0, 1, 2].map((i) => <SkeletonCard key={i} tall />)
             ) : eventsError ? (
-              <SectionError message={eventsError} onRetry={fetchEvents} />
+              <SectionError message={eventsError} onRetry={() => window.location.reload()} />
             ) : events.length === 0 ? (
               <div className="col-span-3 text-center py-16 text-slate-400">
                 <CalendarDays size={32} className="mx-auto mb-3 opacity-40" />
@@ -416,7 +356,7 @@ export default function HomePage() {
             {oppsLoading ? (
               [0, 1, 2].map((i) => <SkeletonCard key={i} />)
             ) : oppsError ? (
-              <SectionError message={oppsError} onRetry={fetchOpps} />
+              <SectionError message={oppsError} onRetry={() => window.location.reload()} />
             ) : opps.length === 0 ? (
               <div className="col-span-3 text-center py-16 text-slate-400">
                 <Briefcase size={32} className="mx-auto mb-3 opacity-40" />

@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Menu, X, CalendarDays, LogOut } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import type { AdminSession } from '@/lib/session';
+import type { AdminSession } from '@/src/types';
 
 export default function Header() {
   const pathname = usePathname();

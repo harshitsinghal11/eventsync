@@ -12,20 +12,10 @@ import {
     EVENT_CATEGORY_OPTIONS,
     type EventCategory,
     normalizeEventCategory,
-} from '@/lib/event-categories';
+} from '@/src/lib/event-categories';
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-interface Event {
-    id: string;
-    title: string;
-    description?: string;
-    date?: string;
-    time?: string;
-    venue?: string;
-    category?: string;
-    duration?: string;
-}
+import { useEvents } from '@/src/hooks/data/useEvents';
+import type { Event } from '@/src/types';
 
 type Category = 'All' | EventCategory;
 
@@ -87,35 +77,13 @@ const fadeUp = {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function EventsPage() {
-    const [events, setEvents] = useState<Event[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+    const { events, isLoading: loading, isError } = useEvents();
+    const error = isError ? String(isError) : null;
 
     // Filters
     const [search, setSearch] = useState('');
     const [activeCategory, setCategory] = useState<Category>('All');
     const [dateFilter, setDateFilter] = useState<DateFilter>('all');
-
-    // ── Fetch ────────────────────────────────────────────────────────────────
-
-    async function fetchEvents() {
-        setLoading(true);
-        setError(null);
-        try {
-            const res = await fetch('/api/events');
-            const json = await res.json();
-            if (!res.ok) throw new Error(json.error ?? 'Failed to load events.');
-            setEvents(json.events ?? json ?? []);
-        } catch (err) {
-            setError(String(err).replace('Error: ', ''));
-        } finally {
-            setLoading(false);
-        }
-    }
-
-    useEffect(() => { fetchEvents(); }, []);
-
-    // ── Filter (client-side, reactive) ───────────────────────────────────────
 
     const filtered = useMemo(() => {
         const q = search.trim().toLowerCase();
@@ -262,7 +230,7 @@ export default function EventsPage() {
                             <div>
                                 <p className="font-semibold text-sm">Failed to load events</p>
                                 <p className="text-sm mt-0.5">{error}</p>
-                                <button onClick={fetchEvents} className="text-sm font-semibold underline mt-2">
+                                <button onClick={() => window.location.reload()} className="text-sm font-semibold underline mt-2">
                                     Retry
                                 </button>
                             </div>

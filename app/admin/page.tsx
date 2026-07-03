@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import AdminDashboard from '@/components/admin/AdminDashboard';
-import { getAdminSession } from '@/lib/server/auth';
+import { getAdminSession } from '@/src/lib/server/auth';
 
 export const metadata: Metadata = {
   title: 'Admin Dashboard - EventSync',

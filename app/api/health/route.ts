@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createSupabaseClient, readSupabaseCredentials } from '@/lib/server/supabase';
+import { createSupabaseClient, readSupabaseCredentials } from '@/src/lib/server/supabase';
 
 export async function GET() {
   const credentials = readSupabaseCredentials();

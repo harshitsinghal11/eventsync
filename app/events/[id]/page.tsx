@@ -19,36 +19,10 @@ import {
   EVENT_CATEGORY_BACKGROUNDS,
   EVENT_CATEGORY_COLORS,
   normalizeEventCategory,
-} from '@/lib/event-categories';
+} from '@/src/lib/event-categories';
 
-interface SupabaseEvent {
-  id: string;
-  title: string;
-  description?: string;
-  date?: string;
-  time?: string;
-  venue?: string;
-  duration?: string;
-  perks?: string | string[];
-  category?: string;
-  registration_link?: string | null;
-  [key: string]: unknown;
-}
-
-interface Coordinator {
-  id: string;
-  event_id: string;
-  name: string;
-  phone?: string;
-  [key: string]: unknown;
-}
-
-interface FetchState {
-  event: SupabaseEvent | null;
-  coordinators: Coordinator[];
-  loading: boolean;
-  error: string | null;
-}
+import { useEvent } from '@/src/hooks/data/useEvents';
+import type { Event, Coordinator } from '@/src/types';
 
 function parsePerks(raw: string | string[] | undefined | null): string[] {
   if (!raw) return [];
@@ -119,55 +93,9 @@ function ErrorState({ message }: { message: string }) {
 
 export default function EventDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const [state, setState] = useState<FetchState>({
-    event: null,
-    coordinators: [],
-    loading: true,
-    error: null,
-  });
-
-  useEffect(() => {
-    if (!id) return;
-    let cancelled = false;
-
-    async function load() {
-      setState({ event: null, coordinators: [], loading: true, error: null });
-
-      try {
-        const res = await fetch(`/api/events/${id}`);
-        const json = await res.json();
-
-        if (!res.ok) {
-          throw new Error(json.error ?? `HTTP ${res.status}`);
-        }
-
-        if (!cancelled) {
-          setState({
-            event: json.event,
-            coordinators: json.coordinators ?? [],
-            loading: false,
-            error: null,
-          });
-        }
-      } catch (error) {
-        if (!cancelled) {
-          setState({
-            event: null,
-            coordinators: [],
-            loading: false,
-            error: String(error),
-          });
-        }
-      }
-    }
-
-    load();
-    return () => {
-      cancelled = true;
-    };
-  }, [id]);
-
-  const { event, coordinators, loading, error } = state;
+  const { event, isLoading: loading, isError } = useEvent(id);
+  const error = isError ? String(isError) : null;
+  const coordinators = event?.event_coordinators ?? [];
 
   if (loading) return <LoadingSkeleton />;
   if (error || !event) return <ErrorState message={error ?? 'Event not found.'} />;
@@ -300,13 +228,13 @@ export default function EventDetailPage() {
                           <p className="truncate text-sm font-semibold text-slate-900">
                             {coordinator.name}
                           </p>
-                          {coordinator.phone ? (
+                          {coordinator.contact_phone ? (
                             <a
-                              href={`tel:${coordinator.phone}`}
+                              href={`tel:${coordinator.contact_phone}`}
                               className="mt-0.5 inline-flex items-center gap-1 text-xs text-primary hover:underline"
                             >
                               <Phone size={11} />
-                              {coordinator.phone}
+                              {coordinator.contact_phone}
                             </a>
                           ) : (
                             <p className="mt-0.5 text-xs text-slate-400">No phone listed</p>

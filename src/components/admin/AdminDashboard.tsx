@@ -11,7 +11,7 @@ import {
   PlusCircle,
   ShieldCheck,
 } from 'lucide-react';
-import type { AdminSession } from '@/lib/session';
+import type { AdminSession } from '@/src/types';
 import CreateEventPanel from '@/components/admin/CreateEventPanel';
 import ManageEventsPanel from '@/components/admin/ManageEventsPanel';
 import CreateOpportunityPanel from '@/components/admin/CreateOpportunityPanel';

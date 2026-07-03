@@ -8,18 +8,8 @@ import {
   Loader2, AlertCircle, Briefcase, X,
 } from 'lucide-react';
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-interface Opportunity {
-  id: string;
-  title: string;
-  description?: string;
-  organization?: string;
-  deadline?: string;
-  contact_info?: string;
-  type?: string;
-  eligibility?: string;
-}
+import { useOpportunities } from '@/src/hooks/data/useOpportunities';
+import type { Opportunity } from '@/src/types';
 
 type OppType = 'All' | 'Internship' | 'Volunteer' | 'Research' | 'Leadership' | 'Other';
 
@@ -114,35 +104,13 @@ const fadeUp = {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function OpportunityPage() {
-  const [opps, setOpps] = useState<Opportunity[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { opportunities: opps, isLoading: loading, isError } = useOpportunities();
+  const error = isError ? String(isError) : null;
 
   // Filters
   const [search, setSearch] = useState('');
   const [activeType, setActiveType] = useState<OppType>('All');
   const [deadlineFilter, setDeadlineFilter] = useState<DeadlineFilter>('all');
-
-  // ── Fetch ────────────────────────────────────────────────────────────────
-
-  async function fetchOpps() {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await fetch('/api/opportunities');
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error ?? 'Failed to load opportunities.');
-      setOpps(json.data ?? json.opportunities ?? json ?? []);
-    } catch (err) {
-      setError(String(err).replace('Error: ', ''));
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  useEffect(() => { fetchOpps(); }, []);
-
-  // ── Filter (client-side, reactive) ───────────────────────────────────────
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -288,7 +256,7 @@ export default function OpportunityPage() {
               <div>
                 <p className="font-semibold text-sm">Failed to load opportunities</p>
                 <p className="text-sm mt-0.5">{error}</p>
-                <button onClick={fetchOpps} className="text-sm font-semibold underline mt-2">
+                <button onClick={() => window.location.reload()} className="text-sm font-semibold underline mt-2">
                   Retry
                 </button>
               </div>

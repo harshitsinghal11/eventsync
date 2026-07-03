@@ -25,11 +25,7 @@
 eventsync/
 ├── app/                          # Next.js App Router pages and API routes
 │   ├── api/
-│   │   ├── admin/events/         # Protected event mutations
-│   │   ├── admin/opportunities/  # Protected opportunity mutations
 │   │   ├── auth/                 # login, logout, signup, session
-│   │   ├── events/               # Public event reads
-│   │   ├── opportunities/        # Public opportunity reads
 │   │   ├── config/supabase/      # Supabase config exposure route
 │   │   └── health/               # Health check
 │   ├── admin/                    # Admin dashboard (server-protected)
@@ -73,16 +69,16 @@ flowchart TB
     Auth[lib/server/auth.ts]
     Supabase[(Supabase PostgreSQL)]
 
-    Browser --> NextPages
-    NextPages -->|fetch REST| NextAPI
+    Browser -->|SWR| Supabase
+    Browser -->|Server Actions| NextAPI
     NextAPI --> Auth
     NextAPI --> Supabase
     NextPages -->|Server Component| Auth
 ```
 
 - **Monolithic Next.js app:** UI and API live in the same deployment.
-- **Data access:** API route handlers instantiate a Supabase client with anon credentials.
-- **Auth boundary:** Public read routes are open; admin mutation routes call `requireAdminApiSession()`.
+- **Data access:** Client reads are handled via SWR hooks (`src/hooks/data/`) that securely fetch from Supabase. Mutations are performed via Server Actions (`src/actions/`).
+- **Auth boundary:** Mutation Server Actions call `getAdminSession()`.
 - **Page protection:** `/admin` uses server-side `getAdminSession()` and `redirect()`.
 
 ## Frontend Architecture
@@ -90,7 +86,7 @@ flowchart TB
 - **Rendering mix:**
   - Root layout and `/admin` use Server Components.
   - Discovery pages, auth pages, and admin panels are Client Components (`'use client'`).
-- **Data fetching:** Client components call internal REST APIs via `fetch`.
+- **Data fetching:** Client components call Supabase directly using SWR hooks. Mutations use Server Actions.
 - **Routing:** Next.js App Router file-based routes only (not `react-router-dom`).
 - **Composition:**
   - Shared `Header` and `Footer` in root layout.
@@ -102,10 +98,9 @@ flowchart TB
 
 - **API style:** RESTful JSON route handlers under `app/api/**/route.ts`.
 - **HTTP methods:**
-  - `GET` — public reads (`/api/events`, `/api/opportunities`, detail routes, `/api/health`, `/api/auth/session`)
-  - `POST` — auth, admin create
-  - `PUT` — admin update
-  - `DELETE` — admin delete, logout
+  - `GET` — `/api/health`, `/api/auth/session`
+  - `POST` — auth routes
+- **Mutations:** Server Actions (`src/actions/`) handle create, update, and delete for events and opportunities.
 - **Validation:** `lib/server/validation.ts` trims strings and builds required-field errors.
 - **Error handling:** JSON `{ error: string }` with appropriate HTTP status codes; `console.error` on server failures.
 - **Coordinator lifecycle:** On event update, existing coordinators are deleted then re-inserted. On event delete, a coordinator cleanup retry path exists for FK constraint failures.
@@ -147,8 +142,7 @@ flowchart TB
   - `409` — duplicate signup email
   - `500` — server/database errors
   - `503` — health degradation
-- **Admin routes:** `/api/admin/events`, `/api/admin/events/[id]`, `/api/admin/opportunities`, `/api/admin/opportunities/[id]`
-- **Canonical opportunity routes:** plural `/api/opportunities` (no duplicate aliases)
+- **Base path:** `/api` for auth/health. Server Actions are used for domain mutations.
 
 ### Environment variables
 

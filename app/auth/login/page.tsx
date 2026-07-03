@@ -7,7 +7,7 @@ import { AlertCircle, ArrowRight, CalendarDays, Loader2, Lock, Mail } from 'luci
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import type { AdminSession } from '@/lib/session';
+import type { AdminSession } from '@/src/types';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');

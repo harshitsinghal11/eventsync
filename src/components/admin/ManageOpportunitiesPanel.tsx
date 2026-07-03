@@ -6,6 +6,8 @@ import {
   Briefcase, RefreshCw, X, CheckCircle2, Save,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { useOpportunities } from '@/src/hooks/data/useOpportunities';
+import { updateOpportunity, deleteOpportunity } from '@/src/actions/opportunityActions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -58,9 +60,8 @@ const selectClassName =
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function ManageOpportunitiesPanel() {
-  const [opps, setOpps]         = useState<OppRow[]>([]);
-  const [loading, setLoading]   = useState(true);
-  const [error, setError]       = useState<string | null>(null);
+  const { opportunities: opps, isLoading: loading, isError, mutate } = useOpportunities();
+  const error = isError ? String(isError) : null;
   const [deleting, setDeleting] = useState<string | null>(null);
 
   // Edit drawer
@@ -72,24 +73,10 @@ export default function ManageOpportunitiesPanel() {
   const [editError, setEditError]         = useState<string | null>(null);
 
   // ── Load list ──────────────────────────────────────────────────────────────
-
-  async function load() {
-    setLoading(true);
-    setError(null);
-    try {
-      const res  = await fetch('/api/opportunities');
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error ?? 'Failed to load opportunities.');
-      // Public GET returns { data: [...] }
-      setOpps(json.data ?? json.opportunities ?? json ?? []);
-    } catch (err) {
-      setError(String(err).replace('Error: ', ''));
-    } finally {
-      setLoading(false);
-    }
+  
+  function load() {
+    mutate();
   }
-
-  useEffect(() => { load(); }, []);
 
   // ── Delete ─────────────────────────────────────────────────────────────────
 
@@ -97,10 +84,8 @@ export default function ManageOpportunitiesPanel() {
     if (!confirm(`Delete "${title}"? This cannot be undone.`)) return;
     setDeleting(id);
     try {
-      const res  = await fetch(`/api/admin/opportunities/${id}`, { method: 'DELETE' });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error ?? 'Delete failed.');
-      setOpps((prev) => prev.filter((o) => o.id !== id));
+      await deleteOpportunity(id);
+      mutate();
       if (editId === id) closeDrawer();
     } catch (err) {
       alert(String(err).replace('Error: ', ''));
@@ -119,11 +104,9 @@ export default function ManageOpportunitiesPanel() {
     setEditForm(EMPTY_EDIT);
 
     try {
-      const res  = await fetch(`/api/opportunities/${id}`);
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error ?? 'Failed to load opportunity.');
+      const op = opps.find(o => o.id === id);
+      if (!op) throw new Error('Opportunity not found');
 
-      const op: OppRow = json.opportunity;
       setEditForm({
         title:        op.title        ?? '',
         description:  op.description  ?? '',
@@ -170,31 +153,14 @@ export default function ManageOpportunitiesPanel() {
     setEditError(null);
 
     try {
-      const res = await fetch(`/api/admin/opportunities/${editId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...editForm,
-          registration_link: editForm.registration_link.trim() || null,
-        }),
+      const result = await updateOpportunity(editId, {
+        ...editForm,
+        registration_link: editForm.registration_link.trim() || null,
       });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error ?? 'Update failed.');
+      if (!result.success) throw new Error('Update failed.');
 
       // Reflect changes in the table immediately
-      setOpps((prev) =>
-        prev.map((op) =>
-          op.id === editId
-            ? {
-                ...op,
-                title:        editForm.title,
-                organization: editForm.organization,
-                deadline:     editForm.deadline,
-                type:         editForm.type,
-              }
-            : op,
-        ),
-      );
+      mutate();
 
       setEditSuccess(true);
     } catch (err) {
